@@ -16,14 +16,14 @@ defmodule Rumbl.Counter do
   def init(initial_val) do
     # send_after(dest, msg, time, opts \\ [])
     # send msg to dest after time (ms)
-    Process.send_after(self, :tick, 1000)
+    Process.send_after(self(), :tick, 1000)
     {:ok, initial_val}
   end
 
   def handle_info(:tick, val) when val <= 0, do: raise "boom!"
   def handle_info(:tick, val) do
     IO.puts "tick #{val}"
-    Process.send_after(self, :tick, 1000)
+    Process.send_after(self(), :tick, 1000)
     {:noreply, val - 1}
   end
 
