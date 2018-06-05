@@ -1,10 +1,28 @@
 defmodule Rumbl.VideoChannel do
   use Rumbl.Web, :channel
 
-  def join("videos:" <> video_id, _params, socket) do
-    {:ok, assign(socket, :video_id, String.to_integer(video_id))}
+  alias Rumbl.AnnotationView
+
+  def join("videos:" <> video_id, params, socket) do
+    # {:ok, assign(socket, :video_id, String.to_integer(video_id))}
     # :timer.send_interval(5_000, :ping)
     # {:ok, socket}
+
+    last_seen_id = params["last_seen_id"] || 0
+    video_id = String.to_integer(video_id)
+    video = Repo.get!(Rumbl.Video, video_id)
+
+    annotations = Repo.all(
+      from a in assoc(video, :annotations),
+      where: a.id > ^last_seen_id,
+      order_by: [asc: a.at, asc: a.id],
+      limit: 200,
+      preload: [:user]
+    )
+
+    resp = %{annotations: Phoenix.View.render_many(annotations,
+                            AnnotationView, "annotation.json")}
+    {:ok, resp, assign(socket, :video_id, video_id)}
   end
 
   # def handle_info(:ping, socket) do
